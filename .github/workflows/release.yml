@@ -1,0 +1,22 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile with csc
+        run: |
+          & "C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe" /target:winexe /out:SysMonitor.exe SysMonitor.cs
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: SysMonitor.exe
+          generate_release_notes: true
