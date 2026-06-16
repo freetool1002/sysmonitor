@@ -1,3 +1,8 @@
 SysMonitor.exe
 __pycache__/
 sysmonitor.py
+.BIN/
+$RECYCLE.BIN/
+SysMonitor.zip
+.opencode/
+opencode.json
