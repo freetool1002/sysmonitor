@@ -138,9 +138,35 @@ class SysMonitor : Form
         prevNet = DateTime.Now;
     }
 
+    private bool IsAutoStart()
+    {
+        var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", false);
+        if (key == null) return false;
+        var val = key.GetValue("SysMonitor") as string;
+        key.Close();
+        return val != null && val == Application.ExecutablePath;
+    }
+
+    private void ToggleAutoStart(ToolStripMenuItem item)
+    {
+        if (IsAutoStart())
+        {
+            var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
+            if (key != null) { key.DeleteValue("SysMonitor", false); key.Close(); }
+            item.Checked = false;
+        }
+        else
+        {
+            var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
+            if (key != null) { key.SetValue("SysMonitor", Application.ExecutablePath); key.Close(); }
+            item.Checked = true;
+        }
+    }
+
     private void BuildMenu()
     {
         var menu = new ContextMenuStrip();
+        menu.Font = new Font("Segoe UI", 10);
 
         var colorMenu = new ToolStripMenuItem("字体颜色");
         colorMenu.DropDownItems.Add("彩色", null, (s, e) => { schemeIdx = 0; Invalidate(); });
@@ -149,9 +175,41 @@ class SysMonitor : Form
         colorMenu.DropDownItems.Add("红色", null, (s, e) => { schemeIdx = 3; Invalidate(); });
         menu.Items.Add(colorMenu);
 
+        var autoStart = new ToolStripMenuItem("开机自启");
+        autoStart.Checked = IsAutoStart();
+        autoStart.Click += (s, e) => ToggleAutoStart(autoStart);
+        menu.Items.Add(autoStart);
+
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("退出", null, (s, e) => Application.Exit());
+        menu.Renderer = new MenuRenderer();
         ContextMenuStrip = menu;
+    }
+
+    class MenuRenderer : ToolStripProfessionalRenderer
+    {
+        public MenuRenderer() : base(new MenuColors()) { }
+        protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+        {
+            e.TextColor = Color.FromArgb(220, 220, 225);
+            base.OnRenderItemText(e);
+        }
+    }
+
+    class MenuColors : ProfessionalColorTable
+    {
+        public override Color MenuItemSelected { get { return Color.FromArgb(50, 50, 55); } }
+        public override Color MenuItemSelectedGradientBegin { get { return Color.FromArgb(50, 50, 55); } }
+        public override Color MenuItemSelectedGradientEnd { get { return Color.FromArgb(50, 50, 55); } }
+        public override Color MenuItemPressedGradientBegin { get { return Color.FromArgb(40, 40, 45); } }
+        public override Color MenuItemPressedGradientEnd { get { return Color.FromArgb(40, 40, 45); } }
+        public override Color ToolStripDropDownBackground { get { return Color.FromArgb(30, 30, 33); } }
+        public override Color ImageMarginGradientBegin { get { return Color.FromArgb(30, 30, 33); } }
+        public override Color ImageMarginGradientMiddle { get { return Color.FromArgb(30, 30, 33); } }
+        public override Color ImageMarginGradientEnd { get { return Color.FromArgb(30, 30, 33); } }
+        public override Color SeparatorDark { get { return Color.FromArgb(60, 60, 65); } }
+        public override Color SeparatorLight { get { return Color.FromArgb(60, 60, 65); } }
+        public override Color MenuBorder { get { return Color.FromArgb(60, 60, 65); } }
     }
 
     private void CalcWidths()
